@@ -1,0 +1,55 @@
+- name: "Create AWS EC2 Instance"
+  hosts: localhost
+  become: false
+  vars_files:
+    - "aws-credentials.yml"
+    - "aws_instance_vars.yml"
+  vars:
+    packages:
+      - python3
+  tasks:
+    - name: "Install Python"
+      package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ packages }}"
+      tags:
+        - install
+
+    - name: "Install boto3 and botocore for host machine"
+      pip:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - boto3
+        - botocore
+      tags:
+        - install
+    - name: "create aws ec2 instances"
+      community.aws.ec2_instance:
+        name: "{{ instance_name }}"
+        region: "{{ region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        key_name: "{{ key_name }}"
+        vpc_subnet_id: "{{ vpc_subnet_id }}"
+        instance_type: "{{ instance_type }}"
+        network_interfaces:
+          - assign_public_ip: true
+        image_id: "{{ ami_id }}"
+        count: "{{ number_of_instance }}"
+        tags:
+          Environment: Testing
+      register: ec2
+
+    - name: "Set Facts"
+      set_fact:
+        instance_ips: "{{ ec2.instances | map(attribute='private_ip_address') | list }}"
+
+    - debug:
+        var: "{{ instance_ips }}"
+
+    - name: "Pass facts variable to Jinja Templates"
+      template:
+        src: inventory.j2
+        dest: inventory

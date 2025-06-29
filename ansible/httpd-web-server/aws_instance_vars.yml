@@ -1,0 +1,11 @@
+instance_name: webserver
+ami_id: "ami-id"
+instance_type: "t2.micro"
+key_name: aws-key-file-name
+security_group: "default"
+storage: 8
+number_of_instance: 3
+volume_device_name: "storage_name"
+volume_size: 8
+vpc_subnet_id: "subnet-id"
+region: "us-east-1"

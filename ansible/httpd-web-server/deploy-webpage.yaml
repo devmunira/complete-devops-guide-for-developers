@@ -1,0 +1,26 @@
+- hosts: all
+  vars:
+    packages:
+      - httpd
+  tasks:
+    - name: "Install packages"
+      package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ packages }}"
+      tags:
+        - install
+
+    - name: "copy webpages"
+      copy:
+        src: ./index.html
+        dest: /var/www/html
+        owner: root
+        group: root
+      tags:
+        - copy
+
+    - name: "start server"
+      service:
+        name: httpd
+        state: started
