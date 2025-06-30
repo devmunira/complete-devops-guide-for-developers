@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kubernetes Cluster Dashboard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .card h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+
+      .status-healthy {
+        background-color: #4caf50;
+        animation: pulse 2s infinite;
+      }
+
+      .status-warning {
+        background-color: #ff9800;
+      }
+
+      .status-error {
+        background-color: #f44336;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .metric {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+
+      .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .metric-label {
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .footer {
+        text-align: center;
+        color: white;
+        margin-top: 40px;
+        padding: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 25px;
+        transition: background 0.3s ease;
+        margin: 10px;
+      }
+
+      .btn:hover {
+        background: #5a6fd8;
+      }
+
+      .cluster-info {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        color: white;
+      }
+
+      .cluster-info h2 {
+        margin-bottom: 15px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+      }
+
+      .info-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .container {
+          padding: 10px;
+        }
+
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🚀 Kubernetes Cluster Dashboard</h1>
+        <p>Multi-Node Cluster Management & Monitoring</p>
+      </div>
+
+      <div class="cluster-info">
+        <h2>📊 Cluster Overview</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Cluster Name</div>
+            <div>k8s-multinode-cluster</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Kubernetes Version</div>
+            <div>v1.29.9</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Deployment Date</div>
+            <div id="deployment-date"></div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Environment</div>
+            <div>Production</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard">
+        <div class="card">
+          <h3>
+            <span class="status-indicator status-healthy"></span>Master Node
+            Status
+          </h3>
+          <p>Master node is running optimally with all core services active.</p>
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-value">100%</div>
+              <div class="metric-label">Uptime</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">2.1%</div>
+              <div class="metric-label">CPU Usage</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <span class="status-indicator status-healthy"></span>Worker Nodes
+          </h3>
+          <p>
+            All worker nodes are healthy and processing workloads efficiently.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-value">3</div>
+              <div class="metric-label">Active Nodes</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">15</div>
+              <div class="metric-label">Running Pods</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <span class="status-indicator status-healthy"></span>Network &
+            Storage
+          </h3>
+          <p>
+            Calico networking and persistent storage are functioning properly.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-value">99.9%</div>
+              <div class="metric-label">Network Uptime</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">50GB</div>
+              <div class="metric-label">Storage Used</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <span class="status-indicator status-healthy"></span>Security &
+            Monitoring
+          </h3>
+          <p>Security policies and monitoring systems are active and alert.</p>
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-value">0</div>
+              <div class="metric-label">Security Alerts</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">24/7</div>
+              <div class="metric-label">Monitoring</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0">
+        <a href="#" class="btn" onclick="refreshMetrics()"
+          >🔄 Refresh Metrics</a
+        >
+        <a href="#" class="btn" onclick="showLogs()">📋 View Logs</a>
+        <a href="#" class="btn" onclick="scaleCluster()">⚡ Scale Cluster</a>
+      </div>
+
+      <div class="footer">
+        <p>
+          © 2024 Kubernetes Multi-Node Cluster | Built with ❤️ using Ansible &
+          Docker
+        </p>
+        <p>Deployed on AWS EC2 with high availability and fault tolerance</p>
+      </div>
+    </div>
+
+    <script>
+      // Set deployment date
+      document.getElementById("deployment-date").textContent =
+        new Date().toLocaleDateString();
+
+      // Simulate real-time updates
+      function refreshMetrics() {
+        alert("Refreshing cluster metrics...");
+        // In a real application, this would fetch live data from the Kubernetes API
+      }
+
+      function showLogs() {
+        alert("Opening cluster logs...");
+        // In a real application, this would open the logging interface
+      }
+
+      function scaleCluster() {
+        alert("Opening cluster scaling interface...");
+        // In a real application, this would open the scaling configuration
+      }
+
+      // Simulate live updates every 30 seconds
+      setInterval(() => {
+        // Update metrics with random variations
+        const metrics = document.querySelectorAll(".metric-value");
+        metrics.forEach((metric) => {
+          if (metric.textContent.includes("%")) {
+            const currentValue = parseFloat(metric.textContent);
+            const variation = (Math.random() - 0.5) * 2; // ±1% variation
+            const newValue = Math.max(
+              0,
+              Math.min(100, currentValue + variation)
+            );
+            metric.textContent = newValue.toFixed(1) + "%";
+          }
+        });
+      }, 30000);
+    </script>
+  </body>
+</html>
